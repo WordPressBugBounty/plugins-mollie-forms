@@ -235,6 +235,7 @@ class FormBuilder
             function mollie_forms_recurring_methods_' . $post . '() {
                 var priceoptions = document.getElementsByName("rfmp_priceoptions_' . $post . '");
                 var freq = "";
+                var frequency = "once";
                 if (0 in priceoptions) {
                     if (priceoptions[0].tagName == "INPUT") {
                         for (var i = 0, length = priceoptions.length; i < length; i++) {
@@ -433,8 +434,7 @@ class FormBuilder
 
 
         $html  = '';
-        $first = true;
-
+		$first = true;
         if ($optionDisplay == 'list') {
             $html .= '<ul ' . $this->buildAtts($atts, ['name', 'placeholder', 'value']) .
                      ' style="list-style-type:none;margin:0;">';
@@ -444,6 +444,10 @@ class FormBuilder
             $html .= '<select name="rfmp_priceoptions_' . $post . '" onchange="mollie_forms_recurring_methods_' .
                      $post . '();mollie_forms_' . $post . '_totals();" ' .
                      $this->buildAtts($atts, ['name', 'placeholder', 'value', 'label']) . ' style="width: 100%;">';
+
+			if (count($priceOptions) > 1) {
+				$html .= '<option value="">-- ' . esc_html__('Choose an option', 'mollie-forms') . ' --</option>';
+			}
         }
 
         // loop through all price options
@@ -482,12 +486,11 @@ class FormBuilder
                                         data-vat="' . esc_attr($priceOption->vat) . '" 
                                         name="rfmp_priceoptions_' . $post . '" 
                                         value="' . esc_attr($priceOption->id) . '"
-                                        ' . ($formValue == $priceOption->id || $first ? ' checked' : '') . '> 
+                                        ' . ($formValue == $priceOption->id || ($first && count($priceOptions) === 1) ? ' checked' : '') . '> 
                                 ' . esc_html($priceOption->description) . ' ' .
                           ($price || $times ? '(' . esc_html(trim($price . $times)) . ')' : '') . '
                             </label>
                           </li>';
-                $first = false;
             } elseif ($optionDisplay == 'table_quantity') {
                 // table view to select multiple options with quantity
                 if ($priceOption->price_type != 'open') {
@@ -524,6 +527,8 @@ class FormBuilder
                          ($price || $times ? ' (' . esc_html(trim($price . $times)) . ')' : '') . '
                           </option>';
             }
+
+	        $first = false;
         }
 
         if ($optionDisplay == 'list') {
@@ -614,9 +619,12 @@ class FormBuilder
             } else if (quantities) {
                 // multiple price options with quantity
                 for (var i = 0; i < quantities.length; i++) {
-                    var q  = parseInt(quantities[i].value);
-                    var optionPrice = parseFloat(parseFloat(quantities[i].dataset.price) * q);
+                    var q = parseInt(quantities[i].value);
+                    if (q <= 0 || isNaN(q)) {
+                        continue;
+                    }
                     
+                    var optionPrice = parseFloat(quantities[i].dataset.price) * q;
                     if (optionPrice > 0 || isNaN(optionPrice)) {
                         var optionVat = (parseInt(quantities[i].dataset.vat) / 100) * optionPrice;
                         vat   += optionVat;
@@ -655,7 +663,7 @@ class FormBuilder
 	                }
 	            }
             }
-            
+
             // Display subtotal
             var subtotalValue = document.getElementById("rfmp_totals_' . $post . '_subtotal_value");
             if (subtotalValue) {

@@ -106,11 +106,11 @@ class Form
             }
 
             if ($labelDisplay == 'placeholder' || $labelDisplay == 'both') {
-                $atts['placeholder'] = $label[$key] . ($required[$key] ? ' *' : '');
+                $atts['placeholder'] = $label[$key] . ($required[$key] && $type !== 'discount_code' ? ' *' : '');
             }
 
             if ($labelDisplay != 'placeholder') {
-                $required = !($type == 'discount_code') && isset($atts['required']);
+                $required = $type !== 'discount_code' && isset($atts['required']);
                 $builder->addLabel($atts['name'], $atts['label'], $required);
             }
 
@@ -280,7 +280,15 @@ class Form
                         ];
                         $optionsDesc[]  = sanitize_text_field($quantity . 'x ' . $option->description);
                     }
+
+					if (empty($priceOptions)) {
+						throw new Exception(esc_html__('Please select at least 1 product', 'mollie-forms'));
+					}
                 } else {
+	                if (!isset($_POST['rfmp_priceoptions_' . $postId])) {
+		                throw new Exception(esc_html__('Please select a product', 'mollie-forms'));
+	                }
+
                     // single price option
                     $option         = $this->db->get_row($this->db->prepare("SELECT * FROM {$this->mollieForms->getPriceOptionsTable()} WHERE id=%d", $_POST['rfmp_priceoptions_' . $postId]));
                     $priceOptions[] = [
@@ -289,10 +297,6 @@ class Form
                     ];
                     $optionsDesc[]  = '1x ' . sanitize_text_field($option->description);
                 }
-
-	            if (empty($priceOptions)) {
-		            throw new Exception(esc_html__('Please select at least 1 product', 'mollie-forms'));
-	            }
 
                 // calc total amounts
                 $totalPrice = 0.00;
@@ -408,7 +412,7 @@ class Form
                     }
 
                     $value = isset($_POST['form_' . $postId . '_field_' . $key]) ?
-                        sanitize_text_field($_POST['form_' . $postId . '_field_' . $key]) : '';
+                        trim(sanitize_text_field($_POST['form_' . $postId . '_field_' . $key])) : '';
                     if ($field_type[$key] === 'payment_methods') {
                         $value = sanitize_text_field($_POST['rfmp_payment_method_' . $postId]);
                     } elseif ($field_type[$key] === 'priceoptions') {
@@ -418,7 +422,7 @@ class Form
 	                }
 
 					$required = get_post_meta($postId, '_rfmp_fields_required', true);
-					if ($field_type[$key] != 'discount_code' && $required[$key] && empty($value)) {
+					if ($field_type[$key] != 'discount_code' && $required[$key] && ($value === '' || (is_array($value) && empty($value)))) {
 						/* translators: %s is the field label */
 						throw new Exception(sprintf(esc_html__( '%s is a required field', 'mollie-forms'), $field));
 					}
