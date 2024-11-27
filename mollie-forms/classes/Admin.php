@@ -400,6 +400,7 @@ class Admin
                         'locale'         => $locale,
                         'resource'       => $api_type,
                         'includeWallets' => 'applepay',
+                        'amount'         => ['value' => '1.00', 'currency' => $currency],
                 ]);
 
                 foreach ($methods as $method) {
@@ -485,33 +486,6 @@ class Admin
         update_post_meta($postId, '_rfmp_recaptcha_v3_site_key', sanitize_text_field($_POST['rfmp_recaptcha_v3_site_key']));
         update_post_meta($postId, '_rfmp_recaptcha_v3_secret_key', sanitize_text_field($_POST['rfmp_recaptcha_v3_secret_key']));
         update_post_meta($postId, '_rfmp_recaptcha_v3_minimum_score', sanitize_text_field($_POST['rfmp_recaptcha_v3_minimum_score']));
-
-        // Disable non-supported payment methods if non-EUR
-        if ($_POST['rfmp_currency'] != 'EUR') {
-            $creditcard = false;
-            $paypal     = false;
-
-            if (isset($_POST['rfmp_payment_method']['creditcard']) &&
-                $_POST['rfmp_payment_method']['creditcard'] == '1') {
-                $creditcard = true;
-            }
-
-            if (isset($_POST['rfmp_payment_method']['paypal']) && $_POST['rfmp_payment_method']['paypal'] == '1') {
-                $paypal = true;
-            }
-
-            foreach ($_POST['rfmp_payment_method'] as $method => $value) {
-                $_POST['rfmp_payment_method'][$method] = '0';
-            }
-
-            if ($creditcard) {
-                $_POST['rfmp_payment_method']['creditcard'] = '1';
-            }
-
-            if ($paypal) {
-                $_POST['rfmp_payment_method']['paypal'] = '1';
-            }
-        }
 
         // Add address fields when API type is "orders"
         if ($_POST['rfmp_api_type'] == 'orders') {
