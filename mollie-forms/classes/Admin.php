@@ -102,10 +102,6 @@ class Admin
                                                          'manage_options',
                                                          'https://support.wobbie.nl',
         ];
-        $submenu['edit.php?post_type=mollie-forms'][] = [__('Feature requests', 'mollie-forms'),
-                                                         'manage_options',
-                                                         'https://features.wobbie.nl',
-        ];
         $submenu['edit.php?post_type=mollie-forms'][] = [__('Donate', 'mollie-forms'),
                                                          'manage_options',
                                                          'https://wobbie.nl/doneren',
@@ -126,8 +122,6 @@ class Admin
             $row_meta = [
                     'support'  => '<a href="https://support.wobbie.nl" target="_blank">' .
                                   esc_html__('Support', 'mollie-forms') . '</a>',
-                    'features' => '<a href="https://features.wobbie.nl" target="_blank">' .
-                                  esc_html__('Feature requests', 'mollie-forms') . '</a>',
                     'add-ons'  => '<a href="edit.php?post_type=mollie-forms&page=add-ons">' .
                                   esc_html__('Add-ons', 'mollie-forms') . '</a>',
                     'donate'   => '<a href="https://wobbie.nl/doneren" target="_blank">' .
@@ -294,6 +288,9 @@ class Admin
         $recaptchaSiteKey    = get_post_meta($post->ID, '_rfmp_recaptcha_v3_site_key', true);
         $recaptchaSecretKey  = get_post_meta($post->ID, '_rfmp_recaptcha_v3_secret_key', true);
         $recaptchaScore      = get_post_meta($post->ID, '_rfmp_recaptcha_v3_minimum_score', true) ?: MollieForms::DEFAULT_MINIMUM_RECAPTCHA_SCORE;
+        $turnstileSiteKey    = get_post_meta($post->ID, '_rfmp_turnstile_site_key', true);
+        $turnstileSecretKey  = get_post_meta($post->ID, '_rfmp_turnstile_secret_key', true);
+        $antispamMethod      = $this->helpers->getAntispamMethod($post->ID);
 
         include $this->mollieForms->getDirPath() . 'templates/metaboxes/settings.php';
     }
@@ -489,6 +486,9 @@ class Admin
         update_post_meta($postId, '_rfmp_recaptcha_v3_site_key', sanitize_text_field($_POST['rfmp_recaptcha_v3_site_key']));
         update_post_meta($postId, '_rfmp_recaptcha_v3_secret_key', sanitize_text_field($_POST['rfmp_recaptcha_v3_secret_key']));
         update_post_meta($postId, '_rfmp_recaptcha_v3_minimum_score', sanitize_text_field($_POST['rfmp_recaptcha_v3_minimum_score']));
+        update_post_meta($postId, '_rfmp_turnstile_site_key', sanitize_text_field($_POST['rfmp_turnstile_site_key']));
+        update_post_meta($postId, '_rfmp_turnstile_secret_key', sanitize_text_field($_POST['rfmp_turnstile_secret_key']));
+        update_post_meta($postId, '_rfmp_antispam_method', sanitize_text_field($_POST['rfmp_antispam_method']));
 
         // Add address fields when API type is "orders"
         if ($_POST['rfmp_api_type'] == 'orders') {
@@ -876,6 +876,12 @@ class Admin
                     <a href="https://wobbie.nl/checkout/laposta-mollie-forms" target="_blank">
                         <h2><?php esc_html_e('Laposta', 'mollie-forms'); ?></h2>
                         <p><?php esc_html_e('Add people to your Laposta mailing list.', 'mollie-forms'); ?></p>
+                    </a>
+                </li>
+                <li class="product">
+                    <a href="https://wobbie.nl/checkout/memberships-mollie-forms" target="_blank">
+                        <h2><?php esc_html_e('Memberships', 'mollie-forms'); ?></h2>
+                        <p><?php esc_html_e('Automatically create a user account and assign a membership role on payment.', 'mollie-forms'); ?></p>
                     </a>
                 </li>
             </ul>
